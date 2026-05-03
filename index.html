@@ -5,149 +5,169 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Filer</title>
-    <!-- inspired by 5iler.com. Killing my mac app effort from 2018? world doesnt need platform centeric anything-->
+    <!-- Inspired by 5iler.com. Killing my mac app effort from 2018? world doesnt need platform centeric anything-->
     <style>
         :root {
-            --color-0: #ff5f56;
-            --color-1: #ffbd2e;
-            --color-2: #27c93f;
-            --color-3: #007aff;
-            --color-4: #af52de;
-            --bg: #111;
-            --transition: 0.25s ease-out;
-        }
+    /* --- Accent Colors --- */
+    --color-0: #ff5f56;
+    --color-1: #27c93f;
+    --color-2: #ffbd2e;
+    --color-3: #007aff;
+    --color-4: #af52de;
+    
+    /* --- Timing --- */
+    --t-layout: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --t-color: 0.2s ease-out;
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    /* --- Default Theme (Dark) --- */
+    --bg: #111;
+    --pane-bg: #111;
+    --active-bg: #181818;
+    --text: #ddd;
+    --label-text: #999;
+    --border: #222;
+    --ui-hover: #333;
+}
 
-        body {
-            background-color: var(--bg);
-            color: #999;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            height: 100vh;
-            overflow: hidden;
-        }
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #e5e5e7;
+        --pane-bg: #f5f5f7;
+        --active-bg: #ffffff;
+        --text: #1d1d1f;
+        --label-text: #86868b;
+        --border: #d2d2d7;
+        --ui-hover: #e1e1e1;
+    }
+}
 
-        .app-container {
-            display: flex;
-            height: 100%;
-            width: 100%;
-        }
+body.force-dark {
+    --bg: #111; --pane-bg: #111; --active-bg: #181818; --text: #ddd; --label-text: #999; --border: #222;
+}
 
-        .pane {
-            position: relative;
-            display: flex;
-            flex-direction: row;
-            transition: flex var(--transition);
-            overflow: hidden;
-            background: #111;
-            flex: 0.2;
-        }
+body.force-light {
+    --bg: #e5e5e7; --pane-bg: #f5f5f7; --active-bg: #ffffff; --text: #1d1d1f; --label-text: #86868b; --border: #d2d2d7;
+}
 
-        .pane.active {
-            flex: 10;
-            flex-direction: column;
-            background: #181818;
-        }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .pane-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            cursor: pointer;
-            background: #111;
-            transition: color 0.2s;
-            border-right: 1px solid #222;
-        }
+body {
+    background-color: var(--bg);
+    color: var(--label-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    /* Transition colors only to avoid layout jitter */
+    transition: background-color var(--t-color);
+}
 
-        .pane:not(.active) .pane-label {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            height: 100%;
-            width: 40px;
-        }
+.app-container { display: flex; height: 100%; width: 100%; }
 
-        .pane.active .pane-label {
-            writing-mode: horizontal-tb;
-            transform: none;
-            width: 100%;
-            height: 40px;
-            justify-content: flex-start;
-            padding-left: 20px;
-            border-right: none;
-            border-bottom: 1px solid #222;
-            color: var(--active-color);
-        }
+.pane {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    /* Separate layout and color transitions */
+    transition: flex var(--t-layout), background-color var(--t-color);
+    overflow: hidden;
+    background: var(--pane-bg);
+    flex: 0.2;
+}
 
-        .content-area {
-            flex: 1;
-            width: 100%;
-            display: none;
-        }
+.pane.active {
+    flex: 10;
+    flex-direction: column;
+    background: var(--active-bg);
+}
 
-        .pane.active .content-area {
-            display: flex;
-        }
+.pane-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    background: var(--pane-bg);
+    border-right: 1px solid var(--border);
+    color: var(--label-text);
+    /* Prevent label jumping */
+    transition: color var(--t-color), background-color var(--t-color), border var(--t-color), width var(--t-layout);
+    z-index: 10;
+}
 
-        textarea {
-            flex: 1;
-            width: 100%;
-            padding: 40px;
-            background: transparent;
-            border: none;
-            outline: none;
-            color: #ddd;
-            font-family: "SF Mono", "Menlo", monospace;
-            font-size: 15px;
-            line-height: 1.8;
-            resize: none;
-        }
+.pane:not(.active) .pane-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    height: 100%;
+    width: 40px;
+}
 
-        .p-0 {
-            --active-color: var(--color-0);
-            border-top: 3px solid var(--color-0);
-        }
+.pane.active .pane-label {
+    writing-mode: horizontal-tb;
+    transform: none;
+    width: 100%;
+    height: 40px;
+    justify-content: flex-start;
+    padding-left: 20px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--active-color);
+}
 
-        .p-1 {
-            --active-color: var(--color-1);
-            border-top: 3px solid var(--color-1);
-        }
+.pane-label::after {
+    /* Pulls the '1', '2', etc. from the HTML data-key attribute */
+    content: "" attr(data-key); 
+    display: block;
+    margin-top: 12px;
+    font-size: 8px;
+    font-weight: bold;
+    /* Use the text variable but slightly faded */
+    color: var(--text);
+    opacity: 0.5; 
+    letter-spacing: 1px;
+    transition: opacity var(--t-color);
+}
 
-        .p-2 {
-            --active-color: var(--color-2);
-            border-top: 3px solid var(--color-2);
-        }
+.pane.active .pane-label::after {
+    margin-top: 0;
+    margin-left: 15px;
+    opacity: 0.8; /* Make it more visible when the pane is active */
+}
 
-        .p-3 {
-            --active-color: var(--color-3);
-            border-top: 3px solid var(--color-3);
-        }
+.content-area { flex: 1; width: 100%; display: none; }
+.pane.active .content-area { display: flex; }
 
-        .p-4 {
-            --active-color: var(--color-4);
-            border-top: 3px solid var(--color-4);
-        }
+textarea {
+    flex: 1;
+    width: 100%;
+    padding: 40px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: "SF Mono", "Menlo", monospace;
+    font-size: 15px;
+    line-height: 1.8;
+    resize: none;
+    transition: color var(--t-color);
+}
 
-        .pane-label::after {
-            content: attr(data-key);
-            display: block;
-            margin-top: 10px;
-            font-size: 9px;
-            opacity: 0.3;
-        }
+/* Accents */
+.p-0 { --active-color: var(--color-0); border-top: 3px solid var(--color-0); }
+.p-1 { --active-color: var(--color-1); border-top: 3px solid var(--color-1); }
+.p-2 { --active-color: var(--color-2); border-top: 3px solid var(--color-2); }
+.p-3 { --active-color: var(--color-3); border-top: 3px solid var(--color-3); }
+.p-4 { --active-color: var(--color-4); border-top: 3px solid var(--color-4); }
 
-        .pane.active .pane-label::after {
-            margin-top: 0;
-            margin-left: 10px;
-        }
+.theme-toggle {
+    position: fixed; bottom: 20px; left: 20px; z-index: 100;
+    background: var(--border); border: none; padding: 8px 14px;
+    border-radius: 6px; cursor: pointer; font-size: 9px;
+    text-transform: uppercase; color: var(--text);
+}
     </style>
 </head>
 
@@ -155,15 +175,15 @@
 
     <main class="app-container">
         <section class="pane p-0" onclick="setActive(0)">
-            <div class="pane-label" data-key="[CTRL+1]">Scratch</div>
+            <div class="pane-label" data-key="^ 1">Scratch</div>
             <div class="content-area"><textarea id="t0" spellcheck="false" placeholder="Scratch..."></textarea></div>
         </section>
         <section class="pane p-1" onclick="setActive(1)">
-            <div class="pane-label" data-key="[CTRL+2]">Notes</div>
+            <div class="pane-label" data-key="^ 2">Notes</div>
             <div class="content-area"><textarea id="t1" spellcheck="false" placeholder="Notes..."></textarea></div>
         </section>
         <section class="pane p-2" onclick="setActive(2)">
-            <div class="pane-label" data-key="[CTRL+3]">Tasks</div>
+            <div class="pane-label" data-key="^ 3">Tasks</div>
             <div class="content-area"><textarea id="t2" spellcheck="false" placeholder="Tasks..."></textarea></div>
         </section>
     </main>
